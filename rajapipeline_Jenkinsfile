@@ -4,7 +4,7 @@ pipeline{
     stages{
         stage(echo){
             steps{
-                echo "sample jenkins pipeline $BRANCH_NAME"
+                echo "sample jenkins pipeline BRANCH_NAME"
             }
         }
         stage(powershell){
