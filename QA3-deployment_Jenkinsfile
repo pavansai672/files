@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Gitcheckout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: 'origin/${BRANCH_NAME}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'gitnew', url: 'https://github.com/pavansai672/ASP_DOT_NET']]])
+                echo 'hello world'
+            }
+        }
+        stage('Build'){
+			steps{
+				bat label: '', script: '"E:\\Nuget\\nuget.exe" restore "%workspace%\\samples-dotnet-helloworld.sln\"'
+				bat "\"${tool name: 'MSBuild', type: 'msbuild'}\" samples-dotnet-helloworld.sln /t:Rebuild /p:Configuration=Release"
+				bat "\"${tool name: 'MSBuild', type: 'msbuild'}\" samples-dotnet-helloworld\\samples-dotnet-helloworld.csproj /p:Configuration=Release /p:DeployOnBuild=True /p:SuperSolution=True /p:PublishProfile=${workspace}\\samples-dotnet-helloworld\\Properties\\PublishProfiles\\piblish.pubxml /p:publishUrl=${workspace}\\Publish\\Store\\Store_${BUILD_ID}"
+			}
+        }
+        stage('Publish'){
+				steps{
+					bat label: '', script: 'powershell -noprofile -command "$ErrorActionPreference" = \'Stop\'; Set-PsDebug -Strict; E:\\PipeLine\\QA_Deployment.ps1' 
+				}
+			}
+		stage ('FTPS'){
+				steps{
+				parallel(
+					"localftp" :{ftpPublisher paramPublish: null, masterNodeName:'', alwaysPublishFromMaster: false, continueOnError: false, failOnError: false, publishers:[[configName: 'local-ftp', transfers: [[asciiMode: false, cleanRemote: false, excludes: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: 'Release\\Zipped', sourceFiles: 'Release\\Zipped\\Store.zip']], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false]]},
+                     )
+				}
+            }
+	}
+}
