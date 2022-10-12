@@ -1,0 +1,16 @@
+pipeline{
+    agent any
+    
+    stages{
+        stage(echo){
+            steps{
+                echo "sample jenkins pipeline BRANCH_NAME"
+            }
+        }
+        stage(powershell){
+            steps{
+                powershell script: "\$ErrorActionPreference = 'stop'; E:\\Pipeline\\Echo_getcontent.ps1"
+            }
+        }
+    }
+}
